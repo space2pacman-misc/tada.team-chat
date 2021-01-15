@@ -5,7 +5,6 @@
                 <p>Only numbers and letter</p>
                 <input type="text" placeholder="Username" v-model="username.value">
                 <button type="button" @click="auth">Enter</button>
-                
             </form>
         </div>
         <div v-if="isAuth">
@@ -22,7 +21,10 @@
 
             <div v-for="(message, index) in room.messages" :key="index">
                 <b>{{ message.sender.username }} @ {{ message.room }}</b>
-                <div>{{ message.text }}</div>
+                <div>
+                    <i v-if="message.sender.username === 'server'">{{ message.text }}</i>
+                    <span v-else>{{ message.text }}</span>
+                </div>
                 <br>
             </div>
         </div>
@@ -106,16 +108,34 @@ export default {
         },
         roomJoin(name) {
             if(this.checkString(name)) {
+                let message = {
+                    sender: {
+                        username: "server"
+                    },
+                    room: name,
+                    text: `Пользователь ${this.username.value} вошел в комнату`
+                }
+
                 this.username.roomName = name;
                 this.room.username = this.username.value;
+                this.room.messages.push(message);
                 //this.request(`api/rooms/${name}/history`).then(this.onMessageHistory);
             }
         },
         roomLeave() {
+            let message = {
+                sender: {
+                    username: "server"
+                },
+                room: name,
+                text: `Пользователь ${this.username.value} покинул комнату`
+            }
+
             this.room.username = "";
+            this.room.messages.push(message);
         },
         sendMessage() {
-            if(this.checkString(this.message)) {
+            if(this.message.length > 0) {
                 let payload = {
                     room: this.room.name,
                     text: this.message
