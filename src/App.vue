@@ -127,7 +127,7 @@ export default {
                 sender: {
                     username: "server"
                 },
-                room: name,
+                room: this.room.name,
                 text: `Пользователь ${this.username.value} покинул комнату`
             }
 
