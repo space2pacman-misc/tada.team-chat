@@ -55,7 +55,7 @@ export default {
                     path: "ws"
                 },
                 http: {
-                    protocol: "http",
+                    protocol: "https",
                     address: "nane.tada.team"
                 }
             }
@@ -76,13 +76,11 @@ export default {
                 return false;
             }
         },
-        // request(url) {
-        //     return fetch(`${this.api.http.protocol}://${this.api.http.address}/${url}`, {
-        //         mode: "no-cors"
-        //     }).then(response => {
-        //         console.log(response)
-        //     });
-        // },
+        request(url) {
+            return fetch(`${this.api.http.protocol}://${this.api.http.address}/${url}`).then(response => {
+                return response.json();
+            });
+        },
         connect() {
             this.socket = new WebSocket(`${this.api.socket.protocol}://${this.api.socket.address}/${this.api.socket.path}?${this.serialize(["username"], [this.username.value])}`);
             this.socket.addEventListener("open", this.onOpen);
@@ -119,7 +117,7 @@ export default {
                 this.username.roomName = name;
                 this.room.username = this.username.value;
                 this.room.messages.push(message);
-                //this.request(`api/rooms/${name}/history`).then(this.onMessageHistory);
+                this.request(`api/rooms/${name}/history`).then(this.onMessageHistory);
             }
         },
         roomLeave() {
@@ -155,9 +153,9 @@ export default {
                 this.room.messages.push(data);
             }
         },
-        // onMessageHistory(response) {
-        //     console.log(response);
-        // },
+        onMessageHistory(response) {
+            this.room.messages.push(...response.result);
+        },
         onError(error) {
             console.log(error);
         }
