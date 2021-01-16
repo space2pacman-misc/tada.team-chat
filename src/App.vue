@@ -1,63 +1,22 @@
 <template>
     <div id="app" class="container mt-5">
         <div v-if="!isAuth">
-            <form class="form" @submit.prevent="auth">
-                <div class="card w-100">
-                    <div class="card-body">
-                        <div class="text-center">
-                            <input type="text" class="form-control mb-3" placeholder="Username" v-model="user.login">
-                            <button type="button" class="btn btn-primary btn-block" @click="auth">Enter</button>
-                        </div>
-                    </div>
-                </div>
-            </form>
+            <Auth />
         </div>
         <div v-if="isAuth" class="card">
             <div class="card-body d-flex">
-                <div class="rooms border-right pr-3 mr-3">
-                    <button type="button" class="btn btn-success btn-block mb-2" @click="roomCreate" :disabled="user.roomName.length !== 0">Room create</button>
-                    <div class="border-top mb-2"></div>
-                    <div class="rooms__buttons overflow-auto">
-                        <div v-for="(room, index) in rooms" :key="index">
-                        <div class="btn btn-block text-left mb-2 rooms__button" :class="user.roomName === room.name ? 'btn-success' : 'btn-info'" @click="roomJoin(room.name)">{{ room.name }}</div>
-                    </div>
-                    </div>
-                </div>
-                <div class="chat">
-                    <form @submit.prevent="sendMessage" class="input-group flex-nowrap">
-                        <input type="text" placeholder="Message" class="form-control w-100" v-model="message" :disabled="user.roomName.length === 0">
-                        <div class="input-group-append">
-                            <button type="button" @click="sendMessage" class="btn btn-primary" :disabled="user.roomName.length === 0">Send</button>
-                            <button type="button" @click="roomLeave" class="btn btn-info" :disabled="user.roomName.length === 0">Leave</button>
-                            <button type="button" @click="logout" class="btn btn-danger">Logout</button>
-                        </div>
-                    </form>
-
-                    <div class="overflow-auto chat__messages mt-3" ref="chat-messages">
-                        <div v-for="(message, index) in room.messages" :key="index">
-                            <div v-if="message.text !== 'Room has been created'">
-                                <b>{{ message.sender.username }} @ {{ message.room }}</b>
-                                <div>
-                                    <i v-if="message.sender.username === 'server'">{{ message.text }}</i>
-                                    <span v-else>{{ message.text }}</span>
-                                </div>
-                                <br>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Rooms :rooms="rooms" />
+                <Chat :messages="room.messages" />
             </div>
         </div>
-
-        <b-modal id="room-create" title="Create room" @ok="onModalRoomCreate($event)">
-            <form @submit.prevent="onModalRoomCreate($event)">
-                <input type="text" class="form-control mb-3" placeholder="Room name" v-model="room.name">
-            </form>
-        </b-modal>
     </div>
 </template>
 
 <script>
+import Auth from "@/components/Auth";
+import Rooms from "@/components/Rooms";
+import Chat from "@/components/Chat";
+
 export default {
     name: "App",
     data() {
@@ -87,8 +46,9 @@ export default {
                 }
             },
             settings: {
-                max_message_length: 10500,
-                max_room_title_length: 50
+                max_message_length: null,
+                max_room_title_length: null,
+                max_history_length: 10
             }
         }
     },
@@ -135,11 +95,6 @@ export default {
 
             return parameters;
         },
-        scroll() {
-            this.$nextTick(() => {
-                this.$refs["chat-messages"].scroll(0, this.$refs["chat-messages"].scrollHeight);
-            })
-        },
         encrypt(data) {
             return JSON.stringify(data);
         },
@@ -165,7 +120,7 @@ export default {
             this.request("api/settings").then(this.onGetSettings);
         },
         roomJoin(name) {
-            if(this.checkString(name)) {
+            if(this.checkString(name) && this.user.roomName !== name) {
                 let message = {
                     sender: {
                         username: "server"
@@ -180,7 +135,7 @@ export default {
                 this.room.messages = [];
                 this.request(`api/rooms/${name}/history`).then(this.onMessageHistory).then(() => {
                     this.room.messages.push(message);
-                    this.scroll();
+                    this.$emit("scroll");
                 });
             }
         },
@@ -222,11 +177,18 @@ export default {
 
             if(data.room === this.room.name && this.room.username.length > 0) {
                 this.room.messages.push(data);
-                this.scroll();
+                this.$emit("scroll");
             }
         },
         onMessageHistory(response) {
-            this.room.messages.push(...response.result);
+            if(response.result.length > this.settings.max_history_length) {
+                let start = response.result.length - 10;
+                let end = response.result.length;
+
+                this.room.messages.push(...response.result.slice(start, end));
+            } else {
+                this.room.messages.push(...response.result);
+            }
         },
         onGetRooms(response) {
             this.rooms = response.result;
@@ -253,6 +215,11 @@ export default {
         onError(error) {
             console.log(error);
         }
+    },
+    components: {
+        Auth,
+        Rooms,
+        Chat
     }
 }
 </script>
