@@ -195,6 +195,7 @@ export default {
             this.room.name = "";
             this.room.username = "";
             this.user.roomName = "";
+            this.message = "";
             this.room.messages.push(message);
         },
         roomCreate() {
@@ -210,7 +211,6 @@ export default {
 
                 this.socket.send(this.encrypt(payload));
                 this.message = "";
-                console.log("test")
             }
         },
         onOpen() {
