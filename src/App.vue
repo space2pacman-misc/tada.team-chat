@@ -198,9 +198,8 @@ export default {
             this.room.messages.push(message);
         },
         roomCreate() {
-            if(this.room.name.length === 0) {
-                this.$bvModal.show("room-create");
-            }
+            this.room.name = "";
+            this.$bvModal.show("room-create");
         },
         sendMessage() {
             if(this.message.length > 0 && this.message.length < this.settings.max_message_length) {
