@@ -19,7 +19,7 @@
                     <div class="border-top mb-2"></div>
                     <div class="rooms__buttons overflow-auto">
                         <div v-for="(room, index) in rooms" :key="index">
-                        <div class="btn btn-block text-left mb-2" :class="user.roomName === room.name ? 'btn-success' : 'btn-info'" @click="roomJoin(room.name)">{{ room.name }}</div>
+                        <div class="btn btn-block text-left mb-2 rooms__button" :class="user.roomName === room.name ? 'btn-success' : 'btn-info'" @click="roomJoin(room.name)">{{ room.name }}</div>
                     </div>
                     </div>
                 </div>
@@ -85,6 +85,10 @@ export default {
                     protocol: "https",
                     address: "nane.tada.team"
                 }
+            },
+            settings: {
+                max_message_length: 10500,
+                max_room_title_length: 50
             }
         }
     },
@@ -93,6 +97,7 @@ export default {
             if(this.checkString(this.user.login)) {
                 this.connect();
                 this.getRooms();
+                this.getSettings();
             }
         },
         checkString(value) {
@@ -155,6 +160,9 @@ export default {
         getRooms() {
             this.request("api/rooms").then(this.onGetRooms);
         },
+        getSettings() {
+            this.request("api/settings").then(this.onGetSettings);
+        },
         roomJoin(name) {
             if(this.checkString(name)) {
                 let message = {
@@ -195,7 +203,7 @@ export default {
             }
         },
         sendMessage() {
-            if(this.message.length > 0) {
+            if(this.message.length > 0 && this.message.length < this.settings.max_message_length) {
                 let payload = {
                     room: this.room.name,
                     text: this.message
@@ -203,6 +211,7 @@ export default {
 
                 this.socket.send(this.encrypt(payload));
                 this.message = "";
+                console.log("test")
             }
         },
         onOpen() {
@@ -222,8 +231,12 @@ export default {
         onGetRooms(response) {
             this.rooms = response.result;
         },
+        onGetSettings(response) {
+            this.settings.max_message_length = response.result.max_message_length;
+            this.settings.max_room_title_length = response.result.max_room_title_length;
+        },
         onModalRoomCreate(event) {
-            if(this.checkString(this.room.name)) {
+            if(this.checkString(this.room.name) && this.room.name.length < this.settings.max_room_title_length) {
                 this.$bvModal.hide("room-create");
 
                 if(!this.rooms.find(room => room.name === this.room.name)) {
@@ -252,7 +265,7 @@ export default {
 }
 
 .rooms {
-    min-width: 200px;
+    width: 200px;
 }
 
 .chat {
@@ -261,6 +274,13 @@ export default {
 
 .rooms__buttons {
     height: calc(100vh - 200px);
+}
+
+.rooms__button {
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chat__messages {
