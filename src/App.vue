@@ -147,6 +147,7 @@ export default {
             return JSON.parse(data);
         },
         logout() {
+            this.socket.close();
             this.isAuth = false;
             this.user.login = "";
             this.user.roomName = "";
