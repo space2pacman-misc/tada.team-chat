@@ -15,7 +15,7 @@
         <div v-if="isAuth" class="card">
             <div class="card-body d-flex">
                 <div class="rooms border-right pr-3 mr-3">
-                    <div class="btn btn-success btn-block mb-2" @click="roomCreate">Room create</div>
+                    <button type="button" class="btn btn-success btn-block mb-2" @click="roomCreate" :disabled="user.roomName.length !== 0">Room create</button>
                     <div class="border-top mb-2"></div>
                     <div class="rooms__buttons overflow-auto">
                         <div v-for="(room, index) in rooms" :key="index">
