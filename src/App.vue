@@ -61,7 +61,7 @@ export default {
             }
         },
         checkString(value) {
-            let regexp = /^[a-zА-ЯёЁ0-9]+$/i;
+            let regexp = /^[a-zА-ЯёЁ0-9 ]+$/i;
 
             if(value.length > 0 && regexp.test(value)) {
                 return true;
